@@ -1,0 +1,32 @@
+# description: React + TypeScript tooling: ESLint 9 (TS, React, Hooks, jsx-a11y), Prettier, commitlint + husky + lint-staged, react-principles skill. With --pack github: CI, release-please, Dependabot.
+
+# Commands the installer prints for the user (it never edits package.json / pyproject.toml):
+# run: npm install -D eslint@9 @eslint/js@9 typescript typescript-eslint globals eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-config-prettier prettier husky lint-staged @commitlint/cli @commitlint/config-conventional
+# run: npm pkg set scripts.prepare="husky" scripts.lint="eslint ." scripts.format="prettier --write ." scripts.format:check="prettier --check ." scripts.typecheck="tsc --noEmit"
+# run: npm run prepare
+
+implies    web
+
+block      react-typescript  AGENTS.md  agents-react-typescript.md
+copy       .claude/skills/react-principles/SKILL.md
+copy       eslint.config.mjs
+copy       .prettierrc.json
+block      react-typescript  .prettierignore  prettierignore.txt  style=hash
+copy       .editorconfig
+block      react-typescript  .gitignore  gitignore.txt  style=hash
+copy       .lintstagedrc.json
+copy       .husky/pre-commit
+copy       .husky/commit-msg
+copy       commitlint.config.mjs
+copy       docs/agent-kit/react-typescript.md  from=docs/react-typescript.md
+
+# GitHub-only: CI, Dependabot and release-please (release-please runs as a GitHub Action,
+# so its config and the generated CHANGELOG.md come with it; without GitHub, the
+# changelog-and-versioning skill uses manual mode).
+block      react-typescript-github  AGENTS.md  agents-react-typescript-github.md  requires=github
+copy       .github/workflows/ci.yml              requires=github  from=github/workflows/ci.yml
+copy       .github/workflows/release-please.yml  requires=github  from=github/workflows/release-please.yml
+copy       .github/dependabot.yml                requires=github  from=github/dependabot.yml
+copy       release-please-config.json            requires=github
+copy       .release-please-manifest.json         requires=github
+copy-once  CHANGELOG.md                          requires=github

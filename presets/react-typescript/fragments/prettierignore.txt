@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+.next
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+CHANGELOG.md
+.release-please-manifest.json
+# Files agent-kit owns and compares on every install (formatting them would cause .new conflicts)
+AGENTS.md
+CLAUDE.md
+.claude/
+docs/agent-kit/
+.github/ISSUE_TEMPLATE/
+.github/pull_request_template.md
