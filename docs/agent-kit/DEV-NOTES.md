@@ -5,8 +5,8 @@ Not shipped (not in package.json `files`). The template's own `MEMORY.md` lives 
 ## Current State
 - [2026-11-11] HANDOFF.md steps 1-5 done: core, web + github packs, react-typescript, node-backend and python presets, installer, validator, tests, README, docs/monorepo.md. `_source/` removed.
 - The original unzip at `./agent-kit/` was deleted by the user on 2026-11-11.
-- No git repo yet (user's choice). Nothing committed.
-- Next: user review; `git init` + first commits; replace `@your-scope` and `UNLICENSED`; consider bumping GitHub Action majors (see Gotchas).
+- [2026-11-11] Git repo initialised on `main` with one commit per milestone. No remote, nothing pushed.
+- Next: add a remote and push (user); replace `@your-scope` and `UNLICENSED`; consider bumping GitHub Action majors (see Gotchas).
 
 ## Commands (verified 2026-11-11, Node 22.18 / npm 11.19 / Python 3.13 on Windows 11)
 | Task | Command |
