@@ -1,0 +1,26 @@
+{
+  "name": "@your-scope/agent-kit",
+  "version": "0.0.0",
+  "description": "Installs AI-agent configuration (AGENTS.md, skills, memory, presets) into a repository. Dry run by default, never overwrites.",
+  "type": "module",
+  "bin": {
+    "agent-kit": "bin/agent-kit.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "core/",
+    "packs/",
+    "presets/",
+    "docs/monorepo.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "validate:template": "node bin/agent-kit.js validate --template"
+  },
+  "license": "UNLICENSED"
+}
