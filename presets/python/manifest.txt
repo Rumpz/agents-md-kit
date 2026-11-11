@@ -1,0 +1,25 @@
+# description: Python tooling without Node: Ruff (lint + format), pytest, optional mypy, pre-commit hooks (Conventional Commits, Ruff). With --pack github: CI, release-please (python), Dependabot.
+
+# Commands the installer prints for the user (it never edits package.json / pyproject.toml):
+# run: python -m pip install ruff==0.17.4 pytest pre-commit
+# run: pre-commit install
+
+block      python  AGENTS.md  agents-python.md
+copy       ruff.toml
+copy       pytest.ini
+copy       mypy.ini
+copy       .pre-commit-config.yaml
+copy       .editorconfig
+block      python  .gitignore  gitignore.txt  style=hash
+copy       docs/agent-kit/python.md  from=docs/python.md
+
+# GitHub-only: CI, Dependabot and release-please. release-please runs as a GitHub Action,
+# so its config and the generated CHANGELOG.md come with it; without GitHub, the
+# changelog-and-versioning skill uses manual mode.
+block      python-github  AGENTS.md  agents-python-github.md  requires=github
+copy       .github/workflows/ci.yml              requires=github  from=github/workflows/ci.yml
+copy       .github/workflows/release-please.yml  requires=github  from=github/workflows/release-please.yml
+copy       .github/dependabot.yml                requires=github  from=github/dependabot.yml
+copy       release-please-config.json            requires=github
+copy       .release-please-manifest.json         requires=github
+copy-once  CHANGELOG.md                          requires=github

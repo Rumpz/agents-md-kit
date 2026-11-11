@@ -1,0 +1,32 @@
+# Git hooks via the pre-commit framework (https://pre-commit.com). No Node needed.
+# Run once per clone:  pre-commit install
+# (default_install_hook_types makes that install both the pre-commit and commit-msg hooks.)
+# Update the pinned revs with:  pre-commit autoupdate
+default_install_hook_types: [pre-commit, commit-msg]
+# Hooks without an explicit `stages` run only before commits, not again on the message.
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.4
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  # Conventional Commits on every commit message (types match the git-commit-and-workflow skill).
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.5.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, perf, refactor, docs, test, build, ci, style, chore, revert]
