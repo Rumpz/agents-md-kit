@@ -1,0 +1,5 @@
+# description: Web pack. HTML/accessibility and SEO skills for any web stack, plus their AGENTS.md block.
+
+block  web  AGENTS.md  agents-web.md
+copy   .claude/skills/html-syntax-and-semantics/SKILL.md
+copy   .claude/skills/seo-best-practices/SKILL.md

@@ -1,0 +1,21 @@
+# description: Always installed. AGENTS.md core block, MEMORY.md, permissions, process and engineering skills, ADR template.
+#
+# Format (one entry per line, fields split on whitespace, paths must not contain spaces):
+#   copy       <path> [requires=<pack>] [from=<unit-relative source>]
+#   copy-once  <path> [requires=<pack>] [from=<unit-relative source>]
+#   block      <id> <dest> <fragment> [style=html|hash] [requires=<pack>]
+#   implies    <pack>     (presets and packs only: selecting the unit also selects that pack)
+
+block      core  AGENTS.md  agents-core.md
+copy       CLAUDE.md
+copy-once  MEMORY.md
+copy       .claude/settings.json
+copy       .claude/skills/agent-memory-protocol/SKILL.md
+copy       .claude/skills/git-commit-and-workflow/SKILL.md
+copy       .claude/skills/changelog-and-versioning/SKILL.md
+copy       .claude/skills/project-management-workflow/SKILL.md
+copy       .claude/skills/backend-security/SKILL.md
+copy       .claude/skills/api-design-rest/SKILL.md
+copy       .claude/skills/database-best-practices/SKILL.md
+copy       .claude/skills/backend-architecture-principles/SKILL.md
+copy-once  docs/adr/0000-template.md

@@ -1,0 +1,6 @@
+# description: GitHub pack. PR and issue templates and the PR-title check. Also enables presets' GitHub CI (requires=github).
+
+copy  .github/pull_request_template.md
+copy  .github/ISSUE_TEMPLATE/bug_report.md
+copy  .github/ISSUE_TEMPLATE/feature_request.md
+copy  .github/workflows/pr-title.yml
