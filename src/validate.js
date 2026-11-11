@@ -8,10 +8,16 @@ import { readTargetFile, walkFiles } from './fsutil.js';
 
 const SKILLS_DIR = '.claude/skills';
 
+/**
+ * @typedef {import('./manifest.js').Units} Units
+ * @typedef {{ known: Set<string>, available: Set<string> }} RefContext
+ */
+
 /** Parse simple `key: value` YAML frontmatter. Returns null if there is none. */
-export function parseFrontmatter(text) {
+export function parseFrontmatter(/** @type {string} */ text) {
   const lines = text.replace(/^﻿/, '').split(/\r?\n/);
   if (lines[0].trim() !== '---') return null;
+  /** @type {Record<string, string>} */
   const data = {};
   for (let i = 1; i < lines.length; i++) {
     if (lines[i].trim() === '---') return data;
@@ -21,7 +27,7 @@ export function parseFrontmatter(text) {
   return null; // never closed
 }
 
-function checkSkillFile(text, folder, label, errors) {
+function checkSkillFile(/** @type {string} */ text, /** @type {string} */ folder, /** @type {string} */ label, /** @type {string[]} */ errors) {
   const fm = parseFrontmatter(text);
   if (!fm) return errors.push(`${label}: missing or unterminated frontmatter`);
   if (fm.name !== folder) errors.push(`${label}: frontmatter name "${fm.name ?? ''}" must equal folder name "${folder}"`);
@@ -29,15 +35,16 @@ function checkSkillFile(text, folder, label, errors) {
 }
 
 /** Backtick code spans outside fenced code blocks. */
-export function codeSpans(text) {
+export function codeSpans(/** @type {string} */ text) {
   const withoutFences = text.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, '');
+  /** @type {string[]} */ 
   const spans = [];
   for (const m of withoutFences.matchAll(/`([^`\n]+)`/g)) spans.push(m[1].trim());
   return spans;
 }
 
 /** Check backtick references to skills. known = every skill name the kit or repo knows. */
-function checkRefs(text, label, { known, available }, errors) {
+function checkRefs(/** @type {string} */ text, /** @type {string} */ label, /** @type {RefContext} */ { known, available }, /** @type {string[]} */ errors) {
   for (const span of codeSpans(text)) {
     if (span.endsWith('.md')) {
       const base = path.posix.basename(span.slice(0, -3));
@@ -56,7 +63,8 @@ function checkRefs(text, label, { known, available }, errors) {
  * Skill names listed in index tables: markdown tables whose header has a
  * "Skill" column. Only text inside the given regions is considered.
  */
-export function indexedSkills(text) {
+export function indexedSkills(/** @type {string} */ text) {
+  /** @type {string[]} */ 
   const names = [];
   let col = -1;
   for (const raw of text.split(/\r?\n/)) {
@@ -78,13 +86,14 @@ export function indexedSkills(text) {
   return names;
 }
 
-function blockRegions(text) {
+function blockRegions(/** @type {string} */ text) {
   const { blocks } = findBlocks(text);
   return blocks.map((b) => text.slice(b.start, b.end)).join('\n\n');
 }
 
-function kitSkillNames(units) {
-  const out = new Map(); // name -> unit name
+function kitSkillNames(/** @type {Units} */ units) {
+  /** @type {Map<string, string>} skill name -> unit name */
+  const out = new Map();
   for (const u of [units.core, ...units.packs.values(), ...units.presets.values()]) {
     for (const e of u.entries) {
       const m = /^\.claude\/skills\/([^/]+)\/SKILL\.md$/.exec(e.dest);
@@ -94,7 +103,7 @@ function kitSkillNames(units) {
   return out;
 }
 
-function lightYamlCheck(text, label, errors) {
+function lightYamlCheck(/** @type {string} */ text, /** @type {string} */ label, /** @type {string[]} */ errors) {
   if (!text.trim()) return errors.push(`${label}: YAML file is empty`);
   const lines = text.split(/\r?\n/);
   lines.forEach((l, i) => {
@@ -102,33 +111,38 @@ function lightYamlCheck(text, label, errors) {
   });
 }
 
-function checkJson(text, label, errors) {
+function checkJson(/** @type {string} */ text, /** @type {string} */ label, /** @type {string[]} */ errors) {
   try {
     JSON.parse(text.replace(/^﻿/, ''));
   } catch (e) {
-    errors.push(`${label}: invalid JSON (${e.message})`);
+    errors.push(`${label}: invalid JSON (${/** @type {Error} */ (e).message})`);
   }
 }
 
 /** Validate an installed repository. */
-export function validateRepo({ target, kitRoot, platform = process.platform }) {
+export function validateRepo(
+  /** @type {{ target: string, kitRoot: string, platform?: string }} */ { target, kitRoot, platform = process.platform },
+) {
+  /** @type {string[]} */
   const errors = [];
+  /** @type {string[]} */
   const warnings = [];
   const notes = ['YAML files get a light check only (non-empty, no tab indentation), not a full parse.'];
   const root = fs.realpathSync(target);
   const units = loadUnits(kitRoot);
-  const read = (rel) => {
+  const read = (/** @type {string} */ rel) => {
     try {
       const buf = readTargetFile(root, rel);
       return buf === null ? null : buf.toString('utf8');
     } catch (e) {
-      errors.push(`${rel}: ${e.message}`);
+      errors.push(`${rel}: ${/** @type {Error} */ (e).message}`);
       return null;
     }
   };
 
   // Skills
   const skillsAbs = path.join(root, ...SKILLS_DIR.split('/'));
+  /** @type {Set<string>} */
   const installed = new Set();
   const skillTexts = [];
   if (fs.existsSync(skillsAbs)) {
@@ -207,39 +221,45 @@ export function validateRepo({ target, kitRoot, platform = process.platform }) {
 }
 
 /** Validate this kit's own template tree. */
-export function validateTemplate({ kitRoot }) {
+export function validateTemplate(/** @type {{ kitRoot: string }} */ { kitRoot }) {
+  /** @type {string[]} */
   const errors = [];
+  /** @type {string[]} */
   const warnings = [];
   const notes = ['YAML files get a light check only (non-empty, no tab indentation), not a full parse.'];
   let units;
   try {
     units = loadUnits(kitRoot);
   } catch (e) {
-    return { errors: [e.message], warnings, notes };
+    return { errors: [/** @type {Error} */ (e).message], warnings, notes };
   }
   const all = [units.core, ...units.packs.values(), ...units.presets.values()];
   const kitSkills = kitSkillNames(units);
   const known = new Set(kitSkills.keys());
-  const copyDests = new Map(); // dest -> unit
-  const blockKeys = new Map(); // dest#id -> unit
+  /** @type {Map<string, { name: string, type: string }>} copy destination -> unit */
+  const copyDests = new Map();
+  /** @type {Map<string, string>} dest#id -> unit name */
+  const blockKeys = new Map();
 
   for (const u of all) {
     const label = path.relative(kitRoot, u.dir).split(path.sep).join('/');
     const referenced = new Set(['manifest.txt']);
+    /** @type {Set<string>} */
     const ownSkills = new Set();
+    /** @type {string[]} */ 
     const indexed = [];
     // A unit may reference skills from core, itself, and packs it implies (transitively).
     const reach = new Set(['core', u.name]);
     const queue = [...u.implies];
-    while (queue.length) {
-      const p = queue.shift();
+    for (let p = queue.shift(); p !== undefined; p = queue.shift()) {
       if (reach.has(p)) continue;
-      if (!units.packs.has(p)) {
+      const pack = units.packs.get(p);
+      if (!pack) {
         errors.push(`${label}/manifest.txt: implies ${p}, which is not a pack (packs: ${[...units.packs.keys()].join(', ')})`);
         continue;
       }
       reach.add(p);
-      queue.push(...units.packs.get(p).implies);
+      queue.push(...pack.implies);
     }
     if (u.implies.includes(u.name)) errors.push(`${label}/manifest.txt: a pack cannot imply itself`);
     const available = new Set([...kitSkills].filter(([, owner]) => reach.has(owner)).map(([n]) => n));

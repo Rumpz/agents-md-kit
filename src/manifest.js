@@ -14,6 +14,15 @@ import path from 'node:path';
 
 export class ManifestError extends Error {}
 
+/**
+ * @typedef {{ kind: 'copy' | 'copy-once', dest: string, source: string, requires: string | null, line: number }} CopyEntry
+ * @typedef {{ kind: 'block', id: string, dest: string, fragment: string, source: string, style: 'html' | 'hash', requires: string | null, line: number }} BlockEntry
+ * @typedef {CopyEntry | BlockEntry} Entry
+ * @typedef {'core' | 'pack' | 'preset'} UnitType
+ * @typedef {{ name: string, type: UnitType, dir: string, entries: Entry[], implies: string[], runs: string[], description: string }} Unit
+ * @typedef {{ core: Unit, packs: Map<string, Unit>, presets: Map<string, Unit> }} Units
+ */
+
 const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -23,7 +32,7 @@ const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
  * paths, backslashes, `.`/`..`/empty segments, NUL bytes.
  * Returns an error message, or null when the path is safe.
  */
-export function checkRelPath(p) {
+export function checkRelPath(/** @type {unknown} */ p) {
   if (typeof p !== 'string' || p.length === 0) return 'empty path';
   if (p.includes('\0')) return 'path contains a NUL byte';
   if (p.includes('\\')) return 'path contains a backslash (use forward slashes)';
@@ -37,7 +46,8 @@ export function checkRelPath(p) {
   return null;
 }
 
-function parseOptions(tokens, allowed, where) {
+function parseOptions(/** @type {string[]} */ tokens, /** @type {string[]} */ allowed, /** @type {string} */ where) {
+  /** @type {Record<string, string>} */
   const opts = {};
   for (const tok of tokens) {
     const eq = tok.indexOf('=');
@@ -64,16 +74,19 @@ function parseOptions(tokens, allowed, where) {
   return opts;
 }
 
-function safePath(p, where, what) {
+function safePath(/** @type {string} */ p, /** @type {string} */ where, /** @type {string} */ what) {
   const err = checkRelPath(p);
   if (err) throw new ManifestError(`${where}: unsafe ${what} "${p}": ${err}`);
   return p;
 }
 
 /** Parse manifest text into entries. Throws ManifestError on the first problem. */
-export function parseManifest(text, label = 'manifest') {
+export function parseManifest(/** @type {string} */ text, label = 'manifest') {
+  /** @type {Entry[]} */
   const entries = [];
+  /** @type {string[]} */
   const implies = [];
+  /** @type {string[]} */
   const runs = []; // `# run: <command>` lines: commands the user runs (files we never touch)
   let description = '';
   const lines = text.split(/\r?\n/);
@@ -109,7 +122,7 @@ export function parseManifest(text, label = 'manifest') {
         dest: safePath(dest, where, 'dest'),
         fragment: safePath(fragment, where, 'fragment'),
         source: `fragments/${fragment}`,
-        style: opts.style ?? 'html',
+        style: /** @type {'html' | 'hash'} */ (opts.style ?? 'html'),
         requires: opts.requires ?? null,
         line: i + 1,
       });
@@ -125,7 +138,7 @@ export function parseManifest(text, label = 'manifest') {
   return { entries, implies, runs, description };
 }
 
-function listDirs(dir) {
+function listDirs(/** @type {string} */ dir) {
   try {
     return fs
       .readdirSync(dir, { withFileTypes: true })
@@ -133,7 +146,7 @@ function listDirs(dir) {
       .map((d) => d.name)
       .sort();
   } catch (e) {
-    if (e.code === 'ENOENT') return [];
+    if (/** @type {NodeJS.ErrnoException} */ (e).code === 'ENOENT') return [];
     throw e;
   }
 }
@@ -143,8 +156,9 @@ function listDirs(dir) {
  * A folder counts as a unit only if it has a manifest.txt.
  * Returns { core, packs: Map, presets: Map } of { name, type, dir, entries, description }.
  */
-export function loadUnits(kitRoot) {
-  const load = (name, type, dir) => {
+export function loadUnits(/** @type {string} */ kitRoot) {
+  /** @returns {Unit} */
+  const load = (/** @type {string} */ name, /** @type {UnitType} */ type, /** @type {string} */ dir) => {
     const file = path.join(dir, 'manifest.txt');
     const label = path.relative(kitRoot, file).split(path.sep).join('/');
     const { entries, implies, runs, description } = parseManifest(fs.readFileSync(file, 'utf8'), label);
@@ -155,11 +169,12 @@ export function loadUnits(kitRoot) {
   if (!fs.existsSync(path.join(coreDir, 'manifest.txt'))) {
     throw new ManifestError(`no core/manifest.txt under ${kitRoot}`);
   }
+  /** @type {Units} */
   const result = { core: load('core', 'core', coreDir), packs: new Map(), presets: new Map() };
-  for (const [type, key] of [
+  for (const [type, key] of /** @type {const} */ ([
     ['pack', 'packs'],
     ['preset', 'presets'],
-  ]) {
+  ])) {
     const base = path.join(kitRoot, key);
     for (const name of listDirs(base)) {
       const dir = path.join(base, name);

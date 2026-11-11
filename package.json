@@ -32,7 +32,13 @@
   },
   "scripts": {
     "test": "node --test",
-    "validate:template": "node bin/agent-kit.js validate --template"
+    "validate:template": "node bin/agent-kit.js validate --template",
+    "typecheck": "tsc -p .",
+    "check": "npm run typecheck && npm test && npm run validate:template"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
   },
   "repository": {
     "type": "git",

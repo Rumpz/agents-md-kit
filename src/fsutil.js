@@ -7,7 +7,7 @@ import { checkRelPath } from './manifest.js';
 export class SafetyError extends Error {}
 
 /** Resolve a manifest-relative path inside root, or throw. */
-export function resolveInside(root, rel) {
+export function resolveInside(/** @type {string} */ root, /** @type {string} */ rel) {
   const err = checkRelPath(rel);
   if (err) throw new SafetyError(`unsafe path "${rel}": ${err}`);
   const abs = path.resolve(root, ...rel.split('/'));
@@ -18,11 +18,11 @@ export function resolveInside(root, rel) {
   return abs;
 }
 
-function lstatOrNull(p) {
+function lstatOrNull(/** @type {string} */ p) {
   try {
     return fs.lstatSync(p);
   } catch (e) {
-    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return null;
+    if (/** @type {NodeJS.ErrnoException} */ (e).code === 'ENOENT' || /** @type {NodeJS.ErrnoException} */ (e).code === 'ENOTDIR') return null;
     throw e;
   }
 }
@@ -32,7 +32,7 @@ function lstatOrNull(p) {
  * junction, or if an intermediate component exists and is not a directory.
  * Returns the lstat of the leaf (or null when it does not exist).
  */
-export function assertNoSymlinks(root, rel) {
+export function assertNoSymlinks(/** @type {string} */ root, /** @type {string} */ rel) {
   resolveInside(root, rel);
   const parts = rel.split('/');
   let cur = root;
@@ -56,14 +56,14 @@ export function assertNoSymlinks(root, rel) {
 }
 
 /** Read root/rel as a Buffer after symlink checks; null if missing. */
-export function readTargetFile(root, rel) {
+export function readTargetFile(/** @type {string} */ root, /** @type {string} */ rel) {
   const st = assertNoSymlinks(root, rel);
   if (!st) return null;
   return fs.readFileSync(resolveInside(root, rel));
 }
 
 /** Create parent directories one level at a time, refusing symlinks along the way. */
-function mkdirsSafe(root, rel) {
+function mkdirsSafe(/** @type {string} */ root, /** @type {string} */ rel) {
   const parts = rel.split('/').slice(0, -1);
   let cur = root;
   for (let i = 0; i < parts.length; i++) {
@@ -78,7 +78,12 @@ function mkdirsSafe(root, rel) {
 }
 
 /** Write root/rel (creating parents) after re-checking that nothing on the path is a symlink. */
-export function writeTargetFile(root, rel, data, { mode } = {}) {
+export function writeTargetFile(
+  /** @type {string} */ root,
+  /** @type {string} */ rel,
+  /** @type {Buffer} */ data,
+  /** @type {{ mode?: number }} */ { mode } = {},
+) {
   assertNoSymlinks(root, rel);
   mkdirsSafe(root, rel);
   const abs = resolveInside(root, rel);
@@ -87,20 +92,24 @@ export function writeTargetFile(root, rel, data, { mode } = {}) {
 }
 
 /** Text equality that ignores LF vs CRLF differences. */
-export function sameText(a, b) {
+export function sameText(/** @type {Buffer} */ a, /** @type {Buffer} */ b) {
   if (a.equals(b)) return true;
-  const norm = (buf) => buf.toString('utf8').replace(/\r\n/g, '\n');
+  const norm = (/** @type {Buffer} */ buf) => buf.toString('utf8').replace(/\r\n/g, '\n');
   return norm(a) === norm(b);
 }
 
-/** Recursively list files (relative, forward slashes) under dir. Skips symlinks. */
-export function walkFiles(dir, base = dir, skip = new Set()) {
+/**
+ * Recursively list files (relative, forward slashes) under dir. Skips symlinks.
+ * @returns {string[]}
+ */
+export function walkFiles(/** @type {string} */ dir, base = dir, /** @type {Set<string>} */ skip = new Set()) {
+  /** @type {string[]} */
   let out = [];
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
   } catch (e) {
-    if (e.code === 'ENOENT') return out;
+    if (/** @type {NodeJS.ErrnoException} */ (e).code === 'ENOENT') return out;
     throw e;
   }
   for (const d of entries) {

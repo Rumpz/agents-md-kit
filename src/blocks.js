@@ -10,19 +10,19 @@ const MARKER_RE = /^(?:<!--\s*(BEGIN|END) agent-kit:([a-z0-9][a-z0-9-]*)\s*-->|#
 // Anything that looks like it is trying to be a marker.
 const MARKERISH_RE = /\b(BEGIN|END)\s+agent-kit:/;
 
-export function markers(id, style = 'html') {
+export function markers(/** @type {string} */ id, style = 'html') {
   if (style === 'hash') return { begin: `# BEGIN agent-kit:${id}`, end: `# END agent-kit:${id}` };
   return { begin: `<!-- BEGIN agent-kit:${id} -->`, end: `<!-- END agent-kit:${id} -->` };
 }
 
 /** "\r\n" if the first line break in the text is CRLF, else "\n". */
-export function detectEol(text) {
+export function detectEol(/** @type {string} */ text) {
   const i = text.indexOf('\n');
   return i > 0 && text[i - 1] === '\r' ? '\r\n' : '\n';
 }
 
 /** Split into lines, remembering each line's start/end offsets (end excludes the line break). */
-function splitLines(text) {
+function splitLines(/** @type {string} */ text) {
   const lines = [];
   let start = 0;
   while (start <= text.length) {
@@ -43,7 +43,7 @@ function splitLines(text) {
  * `start` is the offset of the BEGIN line, `end` the offset just after the END
  * marker text (before its line break). Any error means the file must not be edited.
  */
-export function findBlocks(text) {
+export function findBlocks(/** @type {string} */ text) {
   const blocks = [];
   const errors = [];
   const seen = new Set();
@@ -85,7 +85,7 @@ export function findBlocks(text) {
 }
 
 /** Render a block (markers + content) with the given line ending, without a trailing break. */
-export function renderBlock(id, style, content, eol = '\n') {
+export function renderBlock(/** @type {string} */ id, /** @type {string} */ style, /** @type {string} */ content, eol = '\n') {
   const { begin, end } = markers(id, style);
   const body = content.replace(/\r\n/g, '\n').replace(/\n+$/, '');
   const lines = [begin, ...(body ? body.split('\n') : []), end];
@@ -93,7 +93,7 @@ export function renderBlock(id, style, content, eol = '\n') {
 }
 
 /** Throws if fragment content itself contains marker-like lines. */
-export function assertFragmentClean(content, label) {
+export function assertFragmentClean(/** @type {string} */ content, /** @type {string} */ label) {
   if (MARKERISH_RE.test(content)) throw new Error(`${label}: fragment contains an agent-kit marker`);
 }
 
@@ -102,7 +102,10 @@ export function assertFragmentClean(content, label) {
  * existing: current file text, or null if the file does not exist.
  * Returns { status: 'block-create'|'block-update'|'block-unchanged'|'conflict', text?, reason? }.
  */
-export function applyBlock(existing, { id, style = 'html', content, title = null }) {
+export function applyBlock(
+  /** @type {string | null} */ existing,
+  /** @type {{ id: string, style?: string, content: string, title?: string | null }} */ { id, style = 'html', content, title = null },
+) {
   if (existing === null) {
     const block = renderBlock(id, style, content, '\n');
     return { status: 'block-create', text: (title ? `${title}\n\n` : '') + block + '\n' };
