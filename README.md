@@ -1,20 +1,28 @@
-# agent-kit
+# agents-md-kit
+
+**Built by agents, for agents, reviewed by a human.**
+
+AI coding agents start every session with no memory of your project. This kit gives them what a new teammate would get on day one: the house rules, a place to keep notes, and tooling that catches mistakes before they are committed.
 
 Installs AI coding-agent configuration into a repository: `AGENTS.md` rules, `MEMORY.md`, Claude Code skills and permissions, and optional stack tooling (linting, commit checks, CI, releases). It is a zero-dependency Node CLI that is safe to run on existing repos: **dry run by default, never overwrites, conflicts go to `.new` files.**
 
 ## Quick start
 
-1. Get the kit: `git clone <repo-url> agent-kit && cd agent-kit`. Or skip the clone and replace `node bin/agent-kit.js` with `npx github:<owner>/<repo>` below.
-2. Preview the plan (dry run, writes nothing):
-   `node bin/agent-kit.js install --target ../my-repo --preset react-typescript --pack github`
-3. Re-run with `--apply`, then `node bin/agent-kit.js validate --target ../my-repo`, and follow the printed next-steps doc (`docs/agent-kit/<preset>.md` in your repo).
+Run these from the root of the repository you want to set up:
+
+1. Preview the plan (dry run, writes nothing):
+   `npx agents-md-kit install --preset react-typescript --pack github`
+2. Re-run the same command with `--apply`.
+3. Run `npx agents-md-kit validate`, then follow the printed commands and the next-steps doc (`docs/agent-kit/<preset>.md` in your repo).
+
+From a git clone of this kit, use `node bin/agent-kit.js` in place of `npx agents-md-kit` and pass `--target <your repo>`.
 
 Requires Node 20 or newer to run the installer. Your project does not need Node unless its preset does (the `python` preset doesn't).
 
 ```
-node bin/agent-kit.js install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
-node bin/agent-kit.js validate [--target <dir>] [--template]
-node bin/agent-kit.js list
+npx agents-md-kit install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
+npx agents-md-kit validate [--target <dir>] [--template]
+npx agents-md-kit list
 ```
 
 Exit codes: `0` success, `1` error, `2` install finished with conflicts (review the `.new` files).
@@ -87,7 +95,7 @@ Verified on 2026-11-11 (Windows 11, Node 22.18, npm 11.19, Python 3.13):
 - GitHub Actions workflows (`ci.yml`, `pr-title.yml`, `release-please.yml`), Dependabot configs and release-please behavior. They parse (light check only for YAML) but have never run. The pinned action majors (`actions/checkout@v4`, `setup-node@v4`, `setup-python@v5`, `release-please-action@v4`, `action-semantic-pull-request@v5`) are behind the latest majors. Dependabot will propose updates; review their changelogs before merging.
 - Node 20 (only Node 22 was run).
 - macOS and Linux. Setting the exec bit and refusing file symlinks were exercised only through simulation and Windows junctions.
-- `npx github:<owner>/<repo>` and pnpm/yarn variants.
+- pnpm/yarn variants, and running from the npm registry (`npx agents-md-kit` was run from a local `npm pack` tarball only).
 
 `.claude/settings.json` deny rules use the documented `Bash(cmd *)` and `Read(./path)` forms (checked against the Claude Code permissions docs on 2026-11-11). Prefix deny rules are a guard rail, not a sandbox: a reordered command (`git push origin main --force`) is not matched.
 
@@ -105,7 +113,7 @@ copy       <path> [requires=<pack>] [from=<unit-relative source>]   # create; id
 copy-once  <path> [requires=<pack>] [from=<unit-relative source>]   # create only if missing
 block      <id> <dest> <fragment> [style=html|hash] [requires=<pack>]
 implies    <pack>                                                   # selecting this unit also selects the pack
-# description: <one line shown by `agent-kit list`>
+# description: <one line shown by `agents-md-kit list`>
 # run: <command>                                                    # printed after install (presets need at least one)
 ```
 
@@ -118,8 +126,24 @@ See [docs/monorepo.md](docs/monorepo.md).
 ## Development
 
 ```bash
-npm test                                   # node:test, no dependencies
-node bin/agent-kit.js validate --template  # check manifests, sources, fragments, skills
+npm install         # dev tools only (TypeScript for type-checking); the CLI itself has no dependencies
+npm run check       # type-check, tests and template validation
 ```
 
-The package is publish-ready (`files`, `bin`, `engines`), but it is not published. Replace the `@your-scope` placeholder name and the `UNLICENSED` license before publishing.
+The source is plain JavaScript with JSDoc types, checked by `tsc --noEmit`. There is no build step: the files in `src/` are the files that ship.
+
+Installed files keep the short `agent-kit` name in two places: the managed-block markers (`agent-kit:<id>`) and the `docs/agent-kit/` folder.
+
+## How this kit was built
+
+An AI coding agent (Claude Code) wrote this kit, working from a written handoff and stopping for human review at each milestone. It followed the rules the kit installs:
+
+- **Small, atomic Conventional Commits.** One per milestone.
+- **Working memory kept in the repo.** Decisions and gotchas are recorded as they are found, so the next session can pick up where the last one stopped.
+- **No claim of "done" without running it.** Every preset was installed into a scratch repository and exercised with the real tools. What could not be run is listed under "Untested" above.
+
+Two of the rules exist because of problems found while building it. Formatters rewrote kit-owned files and caused false conflicts on the next install, so those files are now in the ignore block. A release config with nothing to run it pointed the changelog skill at the wrong mode, so that config now installs only with the `github` pack.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -1,4 +1,4 @@
-// agent-kit CLI logic. Exit codes: 0 success, 1 error, 2 install finished with conflicts.
+// agents-md-kit CLI logic. Exit codes: 0 success, 1 error, 2 install finished with conflicts.
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,15 +9,17 @@ import { loadUnits } from './manifest.js';
 const KIT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const USAGE = `Usage:
-  agent-kit install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
-  agent-kit validate [--target <dir>] [--template]
-  agent-kit list
+  agents-md-kit install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
+  agents-md-kit validate [--target <dir>] [--template]
+  agents-md-kit list
 
 install is a dry run unless --apply is given. core is always installed.`;
 
-export function parseArgs(argv) {
+export function parseArgs(/** @type {string[]} */ argv) {
   const [command, ...rest] = argv;
+  /** @type {{ command: string, presets: string[], packs: string[], target: string, apply: boolean, template: boolean, help: boolean }} */
   const opts = { command, presets: [], packs: [], target: '.', apply: false, template: false, help: false };
+  /** @type {Record<string, string[]>} */
   const allowed = {
     install: ['--preset', '--pack', '--target', '--apply'],
     validate: ['--target', '--template'],
@@ -59,18 +61,23 @@ export function parseArgs(argv) {
   return opts;
 }
 
-function printReport({ errors, warnings, notes }, out) {
+/** @typedef {(line: string) => void} Print */
+
+function printReport(
+  /** @type {{ errors: string[], warnings: string[], notes: string[] }} */ { errors, warnings, notes },
+  /** @type {Print} */ out,
+) {
   for (const e of errors) out(`error    ${e}`);
   for (const w of warnings) out(`warning  ${w}`);
   for (const n of notes) out(`note     ${n}`);
 }
 
-export function main(argv, { out = console.log, err = console.error, cwd = process.cwd(), kitRoot = KIT_ROOT } = {}) {
+export function main(/** @type {string[]} */ argv, { out = console.log, err = console.error, cwd = process.cwd(), kitRoot = KIT_ROOT } = {}) {
   let opts;
   try {
     opts = parseArgs(argv);
   } catch (e) {
-    err(e.message);
+    err(/** @type {Error} */ (e).message);
     return 1;
   }
   if (opts.help) {
@@ -82,10 +89,10 @@ export function main(argv, { out = console.log, err = console.error, cwd = proce
     if (opts.command === 'list') {
       const units = loadUnits(kitRoot);
       out(`core (always installed)\n  ${units.core.description}`);
-      for (const [label, map] of [
+      for (const [label, map] of /** @type {const} */ ([
         ['packs (--pack)', units.packs],
         ['presets (--preset)', units.presets],
-      ]) {
+      ])) {
         out(`\n${label}:`);
         if (map.size === 0) out('  (none)');
         for (const u of map.values()) {
@@ -110,6 +117,7 @@ export function main(argv, { out = console.log, err = console.error, cwd = proce
     const res = install({ kitRoot, target, presets: opts.presets, packs: opts.packs, apply: opts.apply });
     const width = Math.max(...res.actions.map((a) => a.op.length), 6);
     for (const a of res.actions) out(`${a.op.padEnd(width)}  ${a.path}${a.detail ? `  (${a.detail})` : ''}`);
+    /** @type {Record<string, number>} */
     const counts = {};
     for (const a of res.actions) {
       const key = a.op.startsWith('conflict') ? 'conflict' : a.op.startsWith('skip (needs') ? 'skip (needs pack)' : a.op;
@@ -126,15 +134,17 @@ export function main(argv, { out = console.log, err = console.error, cwd = proce
       const binAbs = path.join(kitRoot, 'bin', 'agent-kit.js');
       const binRel = path.relative(cwd, binAbs);
       const bin = binRel.startsWith('..') || path.isAbsolute(binRel) ? binAbs : binRel;
-      const q = (s) => (/\s/.test(s) ? `"${s}"` : s);
-      out(`Next: node ${q(bin)} validate --target ${q(opts.target)}`);
+      const q = (/** @type {string} */ s) => (/\s/.test(s) ? `"${s}"` : s);
+      // Installed from npm (npx or a dependency): the path into node_modules is no use to the reader.
+      const viaNpm = kitRoot.split(path.sep).includes('node_modules');
+      out(`Next: ${viaNpm ? 'npx agents-md-kit' : `node ${q(bin)}`} validate --target ${q(opts.target)}`);
     }
     for (const doc of res.nextSteps) out(`Next steps for this preset: ${path.join(res.root, ...doc.split('/'))}`);
     if (res.commands.length) {
       out('');
       out(
         `Run these yourself in ${res.root}${res.applied ? '' : ' (after --apply)'}; ` +
-          'agent-kit never edits package.json, pyproject.toml, README.md or lockfiles:',
+          'agents-md-kit never edits package.json, pyproject.toml, README.md or lockfiles:',
       );
       for (const c of res.commands) out(`  ${c}`);
     } else {
@@ -142,7 +152,7 @@ export function main(argv, { out = console.log, err = console.error, cwd = proce
     }
     return res.conflicts ? 2 : 0;
   } catch (e) {
-    err(`error: ${e.message}`);
+    err(`error: ${/** @type {Error} */ (e).message}`);
     return 1;
   }
 }

@@ -1,10 +1,22 @@
 {
-  "name": "@your-scope/agent-kit",
-  "version": "0.0.0",
+  "name": "agents-md-kit",
+  "version": "0.1.0",
   "description": "Installs AI-agent configuration (AGENTS.md, skills, memory, presets) into a repository. Dry run by default, never overwrites.",
+  "keywords": [
+    "agents-md",
+    "agents.md",
+    "claude-code",
+    "ai-agents",
+    "coding-agents",
+    "skills",
+    "scaffold",
+    "installer",
+    "conventional-commits"
+  ],
+  "license": "MIT",
   "type": "module",
   "bin": {
-    "agent-kit": "bin/agent-kit.js"
+    "agents-md-kit": "bin/agent-kit.js"
   },
   "files": [
     "bin/",
@@ -22,5 +34,13 @@
     "test": "node --test",
     "validate:template": "node bin/agent-kit.js validate --template"
   },
-  "license": "UNLICENSED"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rumpz/agents-md-kit.git"
+  },
+  "homepage": "https://github.com/Rumpz/agents-md-kit#readme",
+  "bugs": {
+    "url": "https://github.com/Rumpz/agents-md-kit/issues"
+  },
+  "author": "Rumpz"
 }

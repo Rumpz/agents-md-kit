@@ -6,16 +6,19 @@ Not shipped (not in package.json `files`). The template's own `MEMORY.md` lives 
 - [2026-11-11] HANDOFF.md steps 1-5 done: core, web + github packs, react-typescript, node-backend and python presets, installer, validator, tests, README, docs/monorepo.md. `_source/` removed.
 - The original unzip at `./agent-kit/` was deleted by the user on 2026-11-11.
 - [2026-11-11] Git repo initialised on `main` with one commit per milestone. No remote, nothing pushed.
-- Next: add a remote and push (user); replace `@your-scope` and `UNLICENSED`; consider bumping GitHub Action majors (see Gotchas).
+- [2026-11-11] User decided to publish to npm as `agents-md-kit` (MIT), reversing the handoff's "do not publish" default. package.json: name, version 0.1.0, license, keywords; bin command `agents-md-kit`. Markers (`agent-kit:<id>`), `docs/agent-kit/` and `bin/agent-kit.js` keep the short name. Verified from a local `npm pack` tarball installed in a scratch project: `npx agents-md-kit` list, dry run, --apply, validate, re-apply (0 writes).
+- Next (user): `npm login` and `npm publish`; add a remote and push; consider bumping GitHub Action majors (see Gotchas).
 
 ## Commands (verified 2026-11-11, Node 22.18 / npm 11.19 / Python 3.13 on Windows 11)
 | Task | Command |
 |---|---|
+| Everything | `npm run check` (type-check + tests + template check; needs `npm install` once) |
 | Tests | `npm test` (= `node --test`) |
 | Template check | `node bin/agent-kit.js validate --template` |
 | Dry run | `node bin/agent-kit.js install --target <dir> --preset <p> --pack github` |
 
 ## Decisions
+- [2026-11-11] Source stays JavaScript; types are JSDoc checked with `tsc --noEmit --checkJs` (strict). TypeScript and @types/node are dev dependencies only. A full TS conversion was rejected: Node will not strip types inside node_modules, so it would need a build step and break running from a clone.
 - [2026-11-11] react-typescript always brings the web pack, via manifest line `implies <pack>` (user decision).
 - [2026-11-11] release-please config, manifest and `CHANGELOG.md` are installed only with the github pack (`requires=github`), so the changelog skill's "config exists => automated mode" rule never points at release-please that cannot run.
 - [2026-11-11] Presets are alternatives: `validate --template` allows presets to share a copy destination; the installer refuses to combine presets whose content for a shared destination differs.
