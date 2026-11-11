@@ -90,12 +90,13 @@ Verified on 2026-11-11 (Windows 11, Node 22.18, npm 11.19, Python 3.13):
 - **node-backend:** the same commitlint/husky checks pass. ESLint catches planted errors in a TypeScript sample.
 - **python:** `ruff check`, `ruff format --check`, `pytest` and `mypy` pass on a sample. pre-commit rejects a bad commit message, accepts a good one and blocks a staged Ruff error.
 - **Clean install:** every preset installs, validates, and re-installs as a no-op.
+- **From the npm registry:** `npx agents-md-kit` (v0.1.0) lists the units, installs the `python` preset with the `github` pack, validates, and a second `--apply` writes nothing.
 
 **Untested:**
 - GitHub Actions workflows (`ci.yml`, `pr-title.yml`, `release-please.yml`), Dependabot configs and release-please behavior. They parse (light check only for YAML) but have never run. The pinned action majors (`actions/checkout@v4`, `setup-node@v4`, `setup-python@v5`, `release-please-action@v4`, `action-semantic-pull-request@v5`) are behind the latest majors. Dependabot will propose updates; review their changelogs before merging.
 - Node 20 (only Node 22 was run).
 - macOS and Linux. Setting the exec bit and refusing file symlinks were exercised only through simulation and Windows junctions.
-- pnpm/yarn variants, and running from the npm registry (`npx agents-md-kit` was run from a local `npm pack` tarball only).
+- pnpm/yarn variants.
 
 `.claude/settings.json` deny rules use the documented `Bash(cmd *)` and `Read(./path)` forms (checked against the Claude Code permissions docs on 2026-11-11). Prefix deny rules are a guard rail, not a sandbox: a reordered command (`git push origin main --force`) is not matched.
 

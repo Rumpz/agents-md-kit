@@ -7,7 +7,8 @@ Not shipped (not in package.json `files`). The template's own `MEMORY.md` lives 
 - The original unzip at `./agent-kit/` was deleted by the user on 2026-11-11.
 - [2026-11-11] Git repo initialised on `main` with one commit per milestone. No remote, nothing pushed.
 - [2026-11-11] User decided to publish to npm as `agents-md-kit` (MIT), reversing the handoff's "do not publish" default. package.json: name, version 0.1.0, license, keywords; bin command `agents-md-kit`. Markers (`agent-kit:<id>`), `docs/agent-kit/` and `bin/agent-kit.js` keep the short name. Verified from a local `npm pack` tarball installed in a scratch project: `npx agents-md-kit` list, dry run, --apply, validate, re-apply (0 writes).
-- Next (user): `npm login` and `npm publish`; add a remote and push; consider bumping GitHub Action majors (see Gotchas).
+- [2026-11-11] Published `agents-md-kit@0.1.0` to npm (account `rumpz`, 2FA auth-and-writes) and pushed `main` to github.com/Rumpz/agents-md-kit. Verified `npx agents-md-kit` from the live registry. npm showed only a `0.0.0-stage` placeholder for about a minute after publishing (registry lag); that placeholder version still exists, harmless.
+- Next: GitHub Actions release workflow via npm trusted publishing (optional); consider bumping action majors (see Gotchas).
 
 ## Commands (verified 2026-11-11, Node 22.18 / npm 11.19 / Python 3.13 on Windows 11)
 | Task | Command |
