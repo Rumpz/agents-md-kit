@@ -1,0 +1,30 @@
+# description: Node.js + TypeScript backend tooling: ESLint (typescript-eslint, Node globals), Prettier, commitlint + husky + lint-staged. With --pack github: CI, release-please, Dependabot.
+
+# Commands the installer prints for the user (it never edits package.json / pyproject.toml):
+# run: npm install -D eslint @eslint/js typescript typescript-eslint globals eslint-config-prettier prettier husky lint-staged @commitlint/cli @commitlint/config-conventional
+# run: npm pkg set scripts.prepare="husky" scripts.lint="eslint ." scripts.format="prettier --write ." scripts.format:check="prettier --check ." scripts.typecheck="tsc --noEmit"
+# run: npm run prepare
+
+
+block      node-backend  AGENTS.md  agents-node-backend.md
+copy       eslint.config.mjs
+copy       .prettierrc.json
+block      node-backend  .prettierignore  prettierignore.txt  style=hash
+copy       .editorconfig
+block      node-backend  .gitignore  gitignore.txt  style=hash
+copy       .lintstagedrc.json
+copy       .husky/pre-commit
+copy       .husky/commit-msg
+copy       commitlint.config.mjs
+copy       docs/agent-kit/node-backend.md  from=docs/node-backend.md
+
+# GitHub-only: CI, Dependabot and release-please (release-please runs as a GitHub Action,
+# so its config and the generated CHANGELOG.md come with it; without GitHub, the
+# changelog-and-versioning skill uses manual mode).
+block      node-backend-github  AGENTS.md  agents-node-backend-github.md  requires=github
+copy       .github/workflows/ci.yml              requires=github  from=github/workflows/ci.yml
+copy       .github/workflows/release-please.yml  requires=github  from=github/workflows/release-please.yml
+copy       .github/dependabot.yml                requires=github  from=github/dependabot.yml
+copy       release-please-config.json            requires=github
+copy       .release-please-manifest.json         requires=github
+copy-once  CHANGELOG.md                          requires=github
