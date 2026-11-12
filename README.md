@@ -133,6 +133,19 @@ npm run check       # type-check, tests and template validation
 
 The source is plain JavaScript with JSDoc types, checked by `tsc --noEmit`. There is no build step: the files in `src/` are the files that ship.
 
+### Releasing
+
+Releases are published from GitHub Actions with npm trusted publishing: no npm token is stored, and the run authenticates over OIDC. One-time setup, on npmjs.com under the package's Settings > Trusted Publisher > GitHub Actions: user `Rumpz`, repository `agents-md-kit`, workflow filename `publish.yml`, no environment. (A new trusted-publisher entry expires unless its first publish succeeds within 2 days.)
+
+Then, for each release:
+
+```bash
+npm version patch          # or minor / major; bumps package.json and creates the vX.Y.Z tag
+git push --follow-tags
+```
+
+`.github/workflows/publish.yml` runs type-check, tests and template validation, checks the tag matches `package.json`, and publishes. To rehearse everything except the upload, run the workflow by hand from the Actions tab (it does `npm publish --dry-run`).
+
 Installed files keep the short `agent-kit` name in two places: the managed-block markers (`agent-kit:<id>`) and the `docs/agent-kit/` folder.
 
 ## How this kit was built

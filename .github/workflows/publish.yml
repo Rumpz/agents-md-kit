@@ -1,0 +1,68 @@
+name: Publish to npm
+
+# Releasing: bump the version, push the commit and tag, and this workflow publishes it.
+#   npm version patch        # or minor / major: updates package.json and creates the vX.Y.Z tag
+#   git push --follow-tags
+# Run it by hand (Actions tab > Run workflow) to rehearse everything except the upload.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # lets npm trusted publishing (OIDC) authenticate this run; no npm token is stored
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest # trusted publishing needs a GitHub-hosted runner
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # never restore a cache in a job that publishes
+
+      - name: Check the toolchain (trusted publishing needs npm 11.5.1+ and Node 22.14+)
+        run: |
+          node --version
+          npm --version
+          node -e "
+            const [a, b, c] = process.versions.node.split('.').map(Number);
+            const [x, y, z] = process.argv[1].split('.').map(Number);
+            const nodeOk = a > 22 || (a === 22 && b >= 14);
+            const npmOk = x > 11 || (x === 11 && (y > 5 || (y === 5 && z >= 1)));
+            if (!nodeOk || !npmOk) { console.error('Node 22.14+ and npm 11.5.1+ are required'); process.exit(1); }
+          " "$(npm --version)"
+
+      - name: Check the tag matches package.json
+        if: github.ref_type == 'tag'
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
+            exit 1
+          fi
+
+      - run: npm ci
+
+      # Type-check, tests and template validation. A failure here stops the release.
+      - run: npm run check
+
+      - name: Show what would be published
+        run: npm pack --dry-run
+
+      # Dry run (manual trigger): everything above ran, nothing is uploaded.
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run
+
+      # Real release (tag push). Provenance is added automatically for trusted publishing from a
+      # public repository. To require a human to approve each release with 2FA, use
+      # `npm stage publish` here instead (then run `npm stage approve <stage-id>` yourself).
+      - name: Publish
+        if: github.event_name == 'push'
+        run: npm publish
