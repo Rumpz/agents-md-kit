@@ -144,7 +144,7 @@ npm version patch          # or minor / major; bumps package.json and creates th
 git push --follow-tags
 ```
 
-`.github/workflows/publish.yml` runs type-check, tests and template validation, checks the tag matches `package.json`, and publishes. To rehearse everything except the upload, run the workflow by hand from the Actions tab (it does `npm publish --dry-run`).
+`.github/workflows/publish.yml` runs type-check, tests and template validation, checks the tag matches `package.json`, and publishes. To rehearse everything except the upload, run the workflow by hand from the Actions tab (it ends in `npm publish --dry-run`). That only passes when `package.json` holds a version that isn't on npm yet, so bump it first (`npm version patch --no-git-tag-version`, commit and push); on an already-published version it stops with "You cannot publish over the previously published versions".
 
 Installed files keep the short `agent-kit` name in two places: the managed-block markers (`agent-kit:<id>`) and the `docs/agent-kit/` folder.
 

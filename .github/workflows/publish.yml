@@ -4,6 +4,8 @@ name: Publish to npm
 #   npm version patch        # or minor / major: updates package.json and creates the vX.Y.Z tag
 #   git push --follow-tags
 # Run it by hand (Actions tab > Run workflow) to rehearse everything except the upload.
+# The rehearsal only passes when package.json has a version that is not on npm yet, because
+# even `npm publish --dry-run` refuses to republish an existing version.
 on:
   push:
     tags: ['v*']
