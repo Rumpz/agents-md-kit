@@ -1,6 +1,6 @@
 {
   "name": "agents-md-kit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Installs AI-agent configuration (AGENTS.md, skills, memory, presets) into a repository. Dry run by default, never overwrites.",
   "keywords": [
     "agents-md",
