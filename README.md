@@ -23,7 +23,10 @@ Requires Node 20 or newer to run the installer. Your project does not need Node 
 npx agents-md-kit install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
 npx agents-md-kit validate [--target <dir>] [--template]
 npx agents-md-kit list
+npx agents-md-kit --help
 ```
+
+`--help` prints the usage, every pack and preset with a short description, and examples. `list` prints just the packs and presets.
 
 Exit codes: `0` success, `1` error, `2` install finished with conflicts (review the `.new` files).
 
@@ -85,7 +88,7 @@ Run the same install command again with a newer kit. Managed blocks update in pl
 ## What is verified, and what is not
 
 Verified on 2026-11-11 (Windows 11, Node 22.18, npm 11.19, Python 3.13):
-- **Test suite:** `npm test` (installer and validator, run in temp directories).
+- **Test suite:** `npm test` (installer and validator, run in temp directories). CI runs the type-check, the tests and `validate --template` on Node 20, 22 and 24 on Linux, macOS and Windows. On the Node 20 runners all 45 tests ran with none skipped, including the real exec-bit and file-symlink checks.
 - **react-typescript:** a planted bad component yields exactly 7 ESLint problems (5 errors, 2 warnings). A clean component passes ESLint and Prettier. husky rejects a bad commit message, accepts a good one and blocks a staged lint error.
 - **node-backend:** the same commitlint/husky checks pass. ESLint catches planted errors in a TypeScript sample.
 - **python:** `ruff check`, `ruff format --check`, `pytest` and `mypy` pass on a sample. pre-commit rejects a bad commit message, accepts a good one and blocks a staged Ruff error.
@@ -94,8 +97,7 @@ Verified on 2026-11-11 (Windows 11, Node 22.18, npm 11.19, Python 3.13):
 
 **Untested:**
 - GitHub Actions workflows (`ci.yml`, `pr-title.yml`, `release-please.yml`), Dependabot configs and release-please behavior. They parse (light check only for YAML) but have never run. The pinned action majors (`actions/checkout@v4`, `setup-node@v4`, `setup-python@v5`, `release-please-action@v4`, `action-semantic-pull-request@v5`) are behind the latest majors. Dependabot will propose updates; review their changelogs before merging.
-- Node 20 (only Node 22 was run).
-- macOS and Linux. Setting the exec bit and refusing file symlinks were exercised only through simulation and Windows junctions.
+- The presets' real-tool checks (ESLint, husky, Ruff, pre-commit) were run on Windows only. On Linux and macOS, only the installer's test suite has run, not the presets' tools.
 - pnpm/yarn variants.
 
 `.claude/settings.json` deny rules use the documented `Bash(cmd *)` and `Read(./path)` forms (checked against the Claude Code permissions docs on 2026-11-11). Prefix deny rules are a guard rail, not a sandbox: a reordered command (`git push origin main --force`) is not matched.
