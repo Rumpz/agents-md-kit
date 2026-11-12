@@ -246,6 +246,39 @@ test('unknown preset/pack names are errors that list valid names; missing target
   assert.throws(() => install({ kitRoot: KIT_ROOT, target: path.join(t, 'missing') }), /does not exist/);
 });
 
+test('--help lists every pack and preset from the kit, with examples, and writes nothing', () => {
+  const target = tmpDir();
+  const before = hashTree(target);
+  for (const argv of [['--help'], ['-h'], ['help'], [], ['install', '--help'], ['validate', '-h'], ['list', '--help']]) {
+    const lines = [];
+    assert.equal(main(argv, { out: (l) => lines.push(l), err: () => {}, cwd: target }), 0, argv.join(' '));
+    const text = lines.join('\n');
+    assert.match(text, /Usage:/, argv.join(' '));
+    assert.match(text, /agents-md-kit --help/, argv.join(' '));
+    for (const name of ['web', 'github', 'react-typescript', 'node-backend', 'python']) {
+      assert.match(text, new RegExp(`^  ${name} `, 'm'), `${argv.join(' ')}: lists ${name}`);
+    }
+    assert.match(text, /\(also installs pack web\)/, argv.join(' '));
+    assert.match(text, /Examples:/, argv.join(' '));
+    for (const l of text.split('\n')) assert.ok(l.length <= 100, `line too long (${l.length}): ${l}`);
+  }
+  assert.equal(hashTree(target), before);
+});
+
+test('--help lists exactly what `list` lists, and still prints usage when the kit is unreadable', () => {
+  const listed = [];
+  main(['list'], { out: (l) => listed.push(l), err: () => {} });
+  const helped = [];
+  main(['--help'], { out: (l) => helped.push(l), err: () => {} });
+  assert.ok(helped.join('\n').includes(listed.join('\n')), 'help embeds the list output verbatim');
+
+  const broken = tmpDir('agent-kit-broken-'); // no core/manifest.txt
+  const lines = [];
+  assert.equal(main(['--help'], { out: (l) => lines.push(l), err: () => {}, kitRoot: broken }), 0);
+  assert.match(lines.join('\n'), /Usage:/);
+  assert.match(lines.join('\n'), /Examples:/);
+});
+
 test('CLI exit codes and argument parsing', () => {
   const t = tmpDir();
   const lines = [];

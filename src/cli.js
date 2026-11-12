@@ -12,8 +12,15 @@ const USAGE = `Usage:
   agents-md-kit install [--preset <name>]... [--pack <name>]... [--target <dir>] [--apply]
   agents-md-kit validate [--target <dir>] [--template]
   agents-md-kit list
+  agents-md-kit --help
 
 install is a dry run unless --apply is given. core is always installed.`;
+
+const EXAMPLES = `Examples:
+  agents-md-kit install --preset react-typescript --pack github   preview, writes nothing
+  agents-md-kit install --preset python --pack github --apply     install into this directory
+  agents-md-kit install --pack web --target ../my-repo --apply    core + web into another repo
+  agents-md-kit validate                                          check what was installed`;
 
 export function parseArgs(/** @type {string[]} */ argv) {
   const [command, ...rest] = argv;
@@ -63,6 +70,44 @@ export function parseArgs(/** @type {string[]} */ argv) {
 
 /** @typedef {(line: string) => void} Print */
 
+const WRAP_COLUMNS = 100;
+
+/** Wrap `text` after a `prefix`, indenting continuation lines under the text. */
+function wrapAfter(/** @type {string} */ prefix, /** @type {string} */ text) {
+  const pad = ' '.repeat(prefix.length);
+  /** @type {string[]} */
+  const lines = [];
+  let line = '';
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (line && prefix.length + line.length + 1 + word.length > WRAP_COLUMNS) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  lines.push(line);
+  return lines.map((l, i) => (i === 0 ? prefix : pad) + l).join('\n');
+}
+
+/** Print core, packs and presets with their descriptions (shared by `list` and `--help`). */
+function printUnits(/** @type {import('./manifest.js').Units} */ units, /** @type {Print} */ out) {
+  out('core (always installed)');
+  out(wrapAfter('  ', units.core.description));
+  for (const [label, map] of /** @type {const} */ ([
+    ['packs (--pack)', units.packs],
+    ['presets (--preset)', units.presets],
+  ])) {
+    out('');
+    out(`${label}:`);
+    if (map.size === 0) out('  (none)');
+    for (const u of map.values()) {
+      const inc = u.implies.length ? ` (also installs pack ${u.implies.join(', ')})` : '';
+      out(wrapAfter(`  ${u.name.padEnd(18)} `, `${u.description}${inc}`));
+    }
+  }
+}
+
 function printReport(
   /** @type {{ errors: string[], warnings: string[], notes: string[] }} */ { errors, warnings, notes },
   /** @type {Print} */ out,
@@ -81,25 +126,23 @@ export function main(/** @type {string[]} */ argv, { out = console.log, err = co
     return 1;
   }
   if (opts.help) {
+    out('agents-md-kit: install AI-agent config (AGENTS.md, skills, memory, tooling) into a repo.');
+    out('');
     out(USAGE);
+    try {
+      out('');
+      printUnits(loadUnits(kitRoot), out);
+    } catch {
+      // A damaged kit still gets the usage text; `validate --template` explains what is wrong.
+    }
+    out('');
+    out(EXAMPLES);
     return 0;
   }
   const target = path.resolve(cwd, opts.target);
   try {
     if (opts.command === 'list') {
-      const units = loadUnits(kitRoot);
-      out(`core (always installed)\n  ${units.core.description}`);
-      for (const [label, map] of /** @type {const} */ ([
-        ['packs (--pack)', units.packs],
-        ['presets (--preset)', units.presets],
-      ])) {
-        out(`\n${label}:`);
-        if (map.size === 0) out('  (none)');
-        for (const u of map.values()) {
-          const inc = u.implies.length ? ` (also installs pack ${u.implies.join(', ')})` : '';
-          out(`  ${u.name.padEnd(18)} ${u.description}${inc}`);
-        }
-      }
+      printUnits(loadUnits(kitRoot), out);
       return 0;
     }
     if (opts.command === 'validate') {
